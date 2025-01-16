@@ -1,35 +1,52 @@
-from sentence_transformers import SentenceTransformer
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+import os
 import faiss
-import numpy as np
 import pickle
-from utils.pdf_extractor import extract_text_from_pdf
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from sentence_transformers import SentenceTransformer
+import pdfplumber
 
+def extract_text_from_pdf(pdf_path):
+    all_text = ""
+    with pdfplumber.open(pdf_path) as pdf:
+        for page in pdf.pages:
+            all_text += page.extract_text()
+    return all_text
 
-def create_vector_store(pdf_path, index_path, chunk_path):
-    # Step 1: Extract text
-    text = extract_text_from_pdf(pdf_path)
+def create_vector_store(directory_path, index_path, chunk_path):
+    all_texts = []  # To store extracted text from all files
 
-    # Step 2: Split text into chunks
+    # Iterate over all PDF files in the directory
+    for filename in os.listdir(directory_path):
+        if filename.endswith(".pdf"):  # Process only PDF files
+            file_path = os.path.join(directory_path, filename)
+            print(f"Processing: {file_path}")
+
+            # Extract text from the current file
+            extracted_text = extract_text_from_pdf(file_path)
+            all_texts.append(extracted_text)
+
+    # Combine all texts into a single string
+    combined_text = "\n".join(all_texts)
+
+    # Split the combined text into smaller chunks
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-    chunks = text_splitter.split_text(text)
+    chunks = text_splitter.split_text(combined_text)
 
-    # Step 3: Generate embeddings
+    # Generate embeddings for each chunk
     embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
     embeddings = embedding_model.encode(chunks)
 
-    # Step 4: Create and save FAISS index
+    # Create and save the FAISS index
     dimension = embeddings.shape[1]
     index = faiss.IndexFlatL2(dimension)
-    index.add(np.array(embeddings))
+    index.add(embeddings)
     faiss.write_index(index, index_path)
 
-    # Step 5: Save text chunks
+    # Save the chunks to a file
     with open(chunk_path, "wb") as f:
         pickle.dump(chunks, f)
 
     print("Vector store created successfully!")
 
-# Usage
 if __name__ == "__main__":
-    create_vector_store("data/Vegetables.pdf", "data/local_vector_database.index", "data/document_chunks.pkl")
+    create_vector_store("data/", "data/local_vector_database.index", "data/document_chunks.pkl")
