@@ -28,10 +28,6 @@ This **Runbook Chatbot** provides a dynamic, conversational interface for intera
 2. **Automation**: Automate the retrieval of troubleshooting steps and standard procedures to save time and improve efficiency.
 3. **Contextual Insights**: Provide contextually relevant information to improve real-time collaboration and decision-making during incidents or processes.
 
-## Application Context: AICAS
-
-The **Runbook Chatbot** is specifically designed for the **FICO AI Cloud Analytics Service (AI CAS)**. AI CAS provides a unified user experience for procuring fully managed AI services for use within customer solutions, both external and hosted, on the Decision Management Platform (DMP). The AI CAS user experience targets customer users but may also be leveraged by internal FICO users and includes publishing, provisioning, monitoring, and managing AI CAS services. The chatbot will be tailored to streamline interactions with AI CAS, enhancing the user experience for both internal and external users.
-
 ## Tech Stack
 
 - **Backend**: LangChain for natural language processing and conversational AI capabilities.
@@ -40,9 +36,9 @@ The **Runbook Chatbot** is specifically designed for the **FICO AI Cloud Analyti
 
 ### Example Use Cases:
 - **Tenant Onboarding**: "How do I onboard a new tenant?"
-- **Provisioning Services**: "What are the steps to provision an AI service?"
-- **Monitoring Performance**: "Show me the performance metrics of the AI service deployed last week."
-- **Troubleshooting Issues**: "I am facing latency issues with an AI service. What should I check?"
+- **Provisioning Services**: "What are the steps to provision an a service?"
+- **Monitoring Performance**: "Show me the performance metrics of the service deployed last week."
+- **Troubleshooting Issues**: "I am facing latency issues with a service. What should I check?"
 
 ## Flowchart
 
