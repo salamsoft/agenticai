@@ -4,49 +4,87 @@ import pickle
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from sentence_transformers import SentenceTransformer
 import pdfplumber
-
+from docx import Document
+import json
+ 
 def extract_text_from_pdf(pdf_path):
     all_text = ""
     with pdfplumber.open(pdf_path) as pdf:
         for page in pdf.pages:
             all_text += page.extract_text()
     return all_text
-
+ 
+def extract_text_from_txt(file_path):
+    """Extracts text from a TXT file."""
+    with open(file_path, "r", encoding="utf-8") as f:
+        return f.read()
+    
+def extract_text_from_json(file_path):
+    """Extracts text from a JSON file."""
+    with open(file_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+ 
+    # Combine all text fields into a single string
+    if isinstance(data, dict):
+        return " ".join(map(str, data.values()))
+    elif isinstance(data, list):
+        return " ".join(map(str, [item for sublist in data for item in sublist]))
+    else:
+        return str(data)
+    
+def extract_text_from_docx(file_path):
+    """Extracts text from a DOCX file."""
+    doc = Document(file_path)
+    return "\n".join([paragraph.text for paragraph in doc.paragraphs])
+ 
 def create_vector_store(directory_path, index_path, chunk_path):
     all_texts = []  # To store extracted text from all files
-
-    # Iterate over all PDF files in the directory
+ 
+    # Iterate over all files in the directory
     for filename in os.listdir(directory_path):
-        if filename.endswith(".pdf"):  # Process only PDF files
-            file_path = os.path.join(directory_path, filename)
-            print(f"Processing: {file_path}")
-
-            # Extract text from the current file
+        file_path = os.path.join(directory_path, filename)
+        print(f"Processing: {file_path}")
+ 
+        if filename.endswith(".pdf"):
+            # Extract text from PDFs
             extracted_text = extract_text_from_pdf(file_path)
-            all_texts.append(extracted_text)
-
+        elif filename.endswith(".txt"):
+            # Extract text from TXT files
+            extracted_text = extract_text_from_txt(file_path)
+        elif filename.endswith(".json"):
+            # Extract text from JSON files
+            extracted_text = extract_text_from_json(file_path)
+        elif filename.endswith("docx"):
+            extracted_text = extract_text_from_docx(file_path)
+        else:
+            print(f"Skipping unsupported file type: {filename}")
+            continue
+ 
+        all_texts.append(extracted_text)
+ 
     # Combine all texts into a single string
     combined_text = "\n".join(all_texts)
-
+ 
     # Split the combined text into smaller chunks
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     chunks = text_splitter.split_text(combined_text)
-
+ 
     # Generate embeddings for each chunk
     embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
     embeddings = embedding_model.encode(chunks)
-
+ 
     # Create and save the FAISS index
     dimension = embeddings.shape[1]
     index = faiss.IndexFlatL2(dimension)
     index.add(embeddings)
     faiss.write_index(index, index_path)
-
+ 
     # Save the chunks to a file
     with open(chunk_path, "wb") as f:
         pickle.dump(chunks, f)
-
+ 
     print("Vector store created successfully!")
-
+ 
+# Usage example
 if __name__ == "__main__":
     create_vector_store("data/", "data/local_vector_database.index", "data/document_chunks.pkl")
