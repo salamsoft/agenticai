@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 from langchain.prompts import PromptTemplate
 from langchain_ollama import ChatOllama
 from langchain_core.output_parsers import StrOutputParser
+
 from vector_store.query_index import query_vector_database
 import streamlit as st
 
@@ -67,3 +68,4 @@ def chatbot():
 
 if __name__ == "__main__":
     chatbot()
+
